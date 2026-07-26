@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Mic, RefreshCw, Settings, CheckCircle2, AlertCircle, User } from 'lucide-react';
+import { Mic, RefreshCw, Settings, CheckCircle2, User, LogOut, LogIn, Loader2 } from 'lucide-react';
 import type { EngineState } from '../../engine/types';
+import { useAuthStore } from '../../store/authStore';
 
 interface HeaderProps {
   currentState: EngineState;
@@ -8,7 +9,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ currentState, onReset }) => {
-  const [isGmailConnected] = useState(true);
+  const { user, isGmailConnected, isLoading, signInWithGoogle, signOut } = useAuthStore();
   const [showSettings, setShowSettings] = useState(false);
 
   return (
@@ -84,43 +85,91 @@ export const Header: React.FC<HeaderProps> = ({ currentState, onReset }) => {
           <span>{currentState.replace(/_/g, ' ')}</span>
         </div>
 
-        {/* Gmail Status Badge */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.45rem',
-          padding: '0.35rem 0.75rem',
-          borderRadius: 'var(--radius-full)',
-          background: isGmailConnected ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.1)',
-          border: isGmailConnected ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(244, 63, 94, 0.3)',
-          fontSize: '0.78rem',
-          fontWeight: 500,
-          color: isGmailConnected ? 'var(--accent-emerald)' : 'var(--accent-rose)'
-        }}>
-          {isGmailConnected ? <CheckCircle2 size={13} /> : <AlertCircle size={13} />}
-          <span>{isGmailConnected ? 'Gmail Connected' : 'Offline Mode'}</span>
-        </div>
-
-        {/* Account Avatar */}
-        <div 
+        {/* Gmail Status & Sign-In Badge */}
+        <button
+          onClick={user ? undefined : signInWithGoogle}
+          disabled={isLoading}
           style={{
-            width: '34px',
-            height: '34px',
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, #334155, #1e293b)',
-            border: '1px solid rgba(255, 255, 255, 0.15)',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--text-main)',
-            fontSize: '0.8rem',
-            fontWeight: 600,
-            cursor: 'pointer'
+            gap: '0.45rem',
+            padding: '0.35rem 0.75rem',
+            borderRadius: 'var(--radius-full)',
+            background: isGmailConnected ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.1)',
+            border: isGmailConnected ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(244, 63, 94, 0.3)',
+            fontSize: '0.78rem',
+            fontWeight: 500,
+            color: isGmailConnected ? 'var(--accent-emerald)' : 'var(--accent-rose)',
+            cursor: user ? 'default' : 'pointer'
           }}
-          title="Executive Account: user@example.com"
         >
-          <User size={16} />
-        </div>
+          {isLoading ? (
+            <Loader2 size={13} className="spinner" />
+          ) : isGmailConnected ? (
+            <CheckCircle2 size={13} />
+          ) : (
+            <LogIn size={13} />
+          )}
+          <span>{isGmailConnected ? 'Gmail Connected' : 'Connect Gmail'}</span>
+        </button>
+
+        {/* Account Avatar / Auth Action */}
+        {user ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div 
+              style={{
+                width: '34px',
+                height: '34px',
+                borderRadius: '50%',
+                background: user.photoURL ? `url(${user.photoURL}) center/cover` : 'linear-gradient(135deg, #0284c7, #4f46e5)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#fff',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+              }}
+              title={`Connected: ${user.name} (${user.email})`}
+            >
+              {!user.photoURL && (user.name ? user.name[0].toUpperCase() : <User size={16} />)}
+            </div>
+            <button
+              onClick={signOut}
+              title="Sign Out of Supabase / Gmail"
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--text-muted)',
+                cursor: 'pointer',
+                padding: '0.3rem'
+              }}
+            >
+              <LogOut size={15} />
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={signInWithGoogle}
+            disabled={isLoading}
+            style={{
+              padding: '0.4rem 0.8rem',
+              borderRadius: 'var(--radius-md)',
+              border: 'none',
+              background: 'linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo))',
+              color: '#fff',
+              fontSize: '0.8rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem'
+            }}
+          >
+            <LogIn size={14} />
+            <span>Sign In</span>
+          </button>
+        )}
 
         {/* Reset Action */}
         <button 
