@@ -1,4 +1,4 @@
-# VoiceMail AI Agent
+# MailFlow
 
 > Production-ready, conversational voice-first email assistant built with React, TypeScript, FastAPI, and OpenAI / Gmail API.
 
